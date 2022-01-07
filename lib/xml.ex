@@ -27,7 +27,9 @@ defmodule Plist.XML do
   end
 
   defp parse_value(element_node() = element) do
-    parse_value(element_node(element, :name), element_node(element, :content))
+    element
+    |> element_node(:name)
+    |> parse_value(element_node(element, :content))
   end
 
   defp parse_value(:string, list) do
@@ -102,12 +104,10 @@ defmodule Plist.XML do
   defp do_parse_text_nodes([], result), do: result
 
   defp do_parse_text_nodes([node | list], result) do
-    text =
-      node
-      |> text_node(:value)
-      |> :unicode.characters_to_binary()
-
-    do_parse_text_nodes(list, result <> text)
+    node
+    |> text_node(:value)
+    |> :unicode.characters_to_binary()
+    |> then(&do_parse_text_nodes(list, result <> &1))
   end
 
   defp empty?({:xmlText, _, _, [], ' ', :text}), do: true
