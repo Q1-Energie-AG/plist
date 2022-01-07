@@ -35,7 +35,9 @@ defmodule Plist.XML do
   end
 
   defp parse_value(:date, nodes) do
-    parse_value(:string, nodes)
+    :string
+    |> parse_value(nodes)
+    |> NaiveDateTime.from_iso8601!()
   end
 
   defp parse_value(:data, nodes) do
