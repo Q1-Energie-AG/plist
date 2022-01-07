@@ -47,19 +47,16 @@ defmodule Plist.Binary do
     end
   end
 
-  defp read_string(handle, length) do
-    IO.binread(handle, length)
-  end
+  defp read_string(handle, length), do: IO.binread(handle, length)
 
   defp read_unicode_string(handle, length) do
-    IO.binread(handle, length * 2)
+    handle
+    |> IO.binread(length * 2)
     |> :unicode.characters_to_binary(:utf16)
   end
 
   defp read_index_list(handle, offsets, object_ref_size, indexes) do
-    Enum.map(indexes, fn index ->
-      read_object_index(handle, offsets, object_ref_size, index)
-    end)
+    Enum.map(indexes, &read_object_index(handle, offsets, object_ref_size, &1))
   end
 
   defp read_dictionary(_, 0, _, _), do: %{}
@@ -74,19 +71,6 @@ defmodule Plist.Binary do
     keys
     |> Enum.zip(values)
     |> Enum.into(%{})
-  end
-
-  defp format_date_time({{year, month, day}, {hour, minute, second}}) do
-    :io_lib.format("~4..0B-~2..0B-~2..0B ~2..0B:~2..0B:~2..0B +0000", [
-      year,
-      month,
-      day,
-      hour,
-      minute,
-      second
-    ])
-    |> List.flatten()
-    |> to_string
   end
 
   defp read_date(handle, length) do
@@ -112,8 +96,9 @@ defmodule Plist.Binary do
   defp read_array(_, 0, _, _), do: []
 
   defp read_array(handle, length, offsets, object_ref_size) do
-    value_offsets = read_offset_list(handle, length, object_ref_size)
-    read_index_list(handle, offsets, object_ref_size, value_offsets)
+    handle
+    |> read_offset_list(length, object_ref_size)
+    |> then(&read_index_list(handle, offsets, object_ref_size, &1))
   end
 
   defp read_singleton(_, length) do
@@ -126,9 +111,7 @@ defmodule Plist.Binary do
     end
   end
 
-  defp read_uid(handle, length) do
-    %{"CF$UID" => read_integer(handle, length)}
-  end
+  defp read_uid(handle, length), do: %{"CF$UID" => read_integer(handle, length)}
 
   defp read_object(handle, offsets, object_ref_size) do
     <<
