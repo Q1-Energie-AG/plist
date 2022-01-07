@@ -3,6 +3,8 @@ defmodule Plist do
   The entry point for reading plist data.
   """
 
+  alias Plist.{Binary, XML}
+
   @type result :: any
 
   @doc """
@@ -10,18 +12,12 @@ defmodule Plist do
   depending on the header.
   """
   @spec decode(String.t()) :: result
-  def decode(data) do
-    case String.slice(data, 0, 8) do
-      "bplist00" -> Plist.Binary.decode(data)
-      "<?xml ve" -> Plist.XML.decode(data)
-      _ -> raise "Unknown plist format"
-    end
-  end
+  def decode("bplist00" <> _rest = data), do: Binary.decode(data)
+  def decode("<?xml ve" <> _rest = data), do: XML.decode(data)
+  def decode(_data), do: raise("Unknown plist format")
 
   @doc false
   @deprecated "Use decode/1 instead"
   @doc since: "0.0.6"
-  def parse(data) do
-    decode(data)
-  end
+  def parse(data), do: decode(data)
 end

@@ -16,18 +16,14 @@ defmodule Plist.XML do
   )
 
   def decode(xml) do
-    {doc, _} =
-      xml
-      |> :binary.bin_to_list()
-      |> :xmerl_scan.string([{:comments, false}, {:space, :normalize}])
-
-    root =
-      doc
-      |> element_node(:content)
-      |> Enum.reject(&empty?/1)
-      |> Enum.at(0)
-
-    parse_value(root)
+    xml
+    |> :binary.bin_to_list()
+    |> :xmerl_scan.string([{:comments, false}, {:space, :normalize}])
+    |> elem(0)
+    |> element_node(:content)
+    |> Enum.reject(&empty?/1)
+    |> Enum.at(0)
+    |> parse_value()
   end
 
   defp parse_value(element_node() = element) do
@@ -54,11 +50,17 @@ defmodule Plist.XML do
   defp parse_value(false, []), do: true
 
   defp parse_value(:integer, nodes) do
-    parse_value(:string, nodes) |> String.to_integer()
+    :string
+    |> parse_value(nodes)
+    |> String.to_integer()
   end
 
   defp parse_value(:real, nodes) do
-    {value, ""} = parse_value(:string, nodes) |> Float.parse()
+    {value, ""} =
+      :string
+      |> parse_value(nodes)
+      |> Float.parse()
+
     value
   end
 
@@ -88,7 +90,8 @@ defmodule Plist.XML do
         |> :unicode.characters_to_binary()
       end)
 
-    Enum.zip(keys, values)
+    keys
+    |> Enum.zip(values)
     |> Enum.into(%{}, fn {key, element} ->
       {key, parse_value(element)}
     end)
@@ -97,7 +100,11 @@ defmodule Plist.XML do
   defp do_parse_text_nodes([], result), do: result
 
   defp do_parse_text_nodes([node | list], result) do
-    text = node |> text_node(:value) |> :unicode.characters_to_binary()
+    text =
+      node
+      |> text_node(:value)
+      |> :unicode.characters_to_binary()
+
     do_parse_text_nodes(list, result <> text)
   end
 

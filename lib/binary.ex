@@ -71,7 +71,8 @@ defmodule Plist.Binary do
     keys = read_index_list(handle, offsets, object_ref_size, key_offsets)
     values = read_index_list(handle, offsets, object_ref_size, value_offsets)
 
-    Enum.zip(keys, values)
+    keys
+    |> Enum.zip(values)
     |> Enum.into(%{})
   end
 
