@@ -29,37 +29,20 @@ defmodule Plist.XML do
   end
 
   def encode(data) do
-    XmlBuilder.document([
-      XmlBuilder.doctype("plist",
+    document([
+      doctype("plist",
         public: ["-//Apple//DTD PLIST 1.0//EN", "http://www.apple.com/DTDs/PropertyList-1.0.dtd"]
       ),
-      XmlBuilder.element(:plist, %{version: "1.0"}, [element(:dict, Enum.map(data, &do_encode/1))])
+      element(:plist, %{version: "1.0"}, [element(:dict, Enum.map(data, &do_encode/1))])
     ])
-    |> XmlBuilder.generate()
-  end
-
-  defp do_encode({key, value}) when is_binary(value) do
-    if String.valid?(value) do
-      [
-        XmlBuilder.element(:key, key),
-        XmlBuilder.element(:string, value)
-      ]
-    else
-      [
-        XmlBuilder.element(:key, key),
-        XmlBuilder.element(:data, Base.encode64(value))
-      ]
-    end
+    |> generate()
   end
 
   defp do_encode({key, value}) do
-    [
-      element(:key, key),
-      encode_value(value)
-    ]
+    [element(:key, key), encode_value(value)]
   end
 
-  defp do_encode(_), do: XmlBuilder.element(:foo)
+  defp do_encode(_), do: raise "failed to encode value"
 
   defp encode_value({:data, data}), do: element(:data, Base.encode64(data))
   defp encode_value(value) when is_boolean(value), do: element(value)

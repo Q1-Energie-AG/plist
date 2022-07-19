@@ -6,7 +6,7 @@ defmodule Plist do
   alias Plist.{Binary, XML}
 
   @type result :: map()
-  @type format :: :binary | :xml
+  @type format :: :xml # | :binary
 
   @doc """
   Parse the data provided as an XML or binary format plist,
@@ -20,7 +20,6 @@ defmodule Plist do
   @spec encode(map(), format()) :: binary()
   def encode(data, format \\ :xml)
   def encode(data, :xml), do: XML.encode(data)
-  def encode(data, :binary), do: Binary.encode(data)
 
   @doc false
   @deprecated "Use decode/1 instead"
