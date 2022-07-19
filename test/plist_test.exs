@@ -18,6 +18,29 @@ defmodule PlistTest do
     assert Map.get(plist, "SomeUID")["CF$UID"] == 40
   end
 
+  test "encode xml plist" do
+    to_encode = %{
+      "Array" => ["A", "B", "C"],
+      "Date" => ~N[2015-11-17 14:00:59Z],
+      "Number" => 1234,
+      "Float" => 1234.1234,
+      "String" => "foobar",
+      "True" => true,
+      "Base64" => {:data, <<0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10>>},
+      "EntityEncoded" => "Foo & Bar",
+      "UnicσdeKey" => "foobar",
+      "UnicodeValue" => "© 2008 – 2016",
+      "SomeUID" => %{
+        "CF$UID" => 40
+      }
+    }
+
+    encoded = Plist.XML.encode(to_encode)
+
+    assert Map.put(Plist.decode(encoded), "Base64", {:data, <<0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10>>}) ==
+             to_encode
+  end
+
   test "basic parsing (xml)" do
     plist = parse_fixture("xml.plist")
 
@@ -34,10 +57,14 @@ defmodule PlistTest do
     assert Map.get(plist, "SomeUID")["CF$UID"] == 40
   end
 
-  defp parse_fixture(filename) do
+  def load_fixture(filename) do
     [File.cwd!(), "test", "fixtures", filename]
     |> Path.join()
     |> File.read!()
+  end
+
+  defp parse_fixture(filename) do
+    load_fixture(filename)
     |> Plist.decode()
   end
 end

@@ -16,6 +16,7 @@ defmodule Plist.Mixfile do
 
   defp deps do
     [
+      {:xml_builder, "~> 2.2"},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:dialyxir, "~> 1.1", only: :dev, runtime: false}
     ]

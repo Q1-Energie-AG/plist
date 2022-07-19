@@ -1,11 +1,15 @@
 # http://fileformats.archiveteam.org/wiki/Property_List/Binary
 defmodule Plist.Binary do
-  use Bitwise
+  import Bitwise
 
   @moduledoc false
 
   def decode(data) do
     File.open!(data, [:ram, :binary], &do_parse/1)
+  end
+
+  def encode(data) do
+    {:foo, :bar}
   end
 
   defp do_parse(handle) do

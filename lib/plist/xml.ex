@@ -1,6 +1,8 @@
 defmodule Plist.XML do
   require Record
 
+  import XmlBuilder
+
   @moduledoc false
 
   Record.defrecordp(
@@ -24,6 +26,60 @@ defmodule Plist.XML do
     |> Enum.reject(&empty?/1)
     |> Enum.at(0)
     |> parse_value()
+  end
+
+  def encode(data) do
+    XmlBuilder.document([
+      XmlBuilder.doctype("plist",
+        public: ["-//Apple//DTD PLIST 1.0//EN", "http://www.apple.com/DTDs/PropertyList-1.0.dtd"]
+      ),
+      XmlBuilder.element(:plist, %{version: "1.0"}, [element(:dict, Enum.map(data, &do_encode/1))])
+    ])
+    |> XmlBuilder.generate()
+  end
+
+  defp do_encode({key, value}) when is_binary(value) do
+    if String.valid?(value) do
+      [
+        XmlBuilder.element(:key, key),
+        XmlBuilder.element(:string, value)
+      ]
+    else
+      [
+        XmlBuilder.element(:key, key),
+        XmlBuilder.element(:data, Base.encode64(value))
+      ]
+    end
+  end
+
+  defp do_encode({key, value}) do
+    [
+      element(:key, key),
+      encode_value(value)
+    ]
+  end
+
+  defp do_encode(_), do: XmlBuilder.element(:foo)
+
+  defp encode_value({:data, data}), do: element(:data, Base.encode64(data))
+  defp encode_value(value) when is_boolean(value), do: element(value)
+  defp encode_value(value) when is_integer(value), do: element(:integer, value)
+  defp encode_value(value) when is_float(value), do: element(:real, value)
+
+  defp encode_value(value) when is_list(value) do
+    element(:array, Enum.map(value, &encode_value/1))
+  end
+
+  defp encode_value(%NaiveDateTime{} = datetime) do
+    element(:date, NaiveDateTime.to_iso8601(datetime))
+  end
+
+  defp encode_value(value) when is_map(value) do
+    element(:dict, Enum.map(value, &do_encode/1))
+  end
+
+  defp encode_value(value) when is_binary(value) do
+    element(:string, value)
   end
 
   defp parse_value(element_node() = element) do
